@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  instructorVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      Tags:
+      - Key: Name
+        Value: instructor-vpc
+
+  instructorPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.0.0/27
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref instructorVPC
+      AvailabilityZone: us-east-1a
+      Tags:
+        - Key: Name
+          Value: instructorPublicSubnet
+  
+  instructorInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: instructorInternetGateway
+  
+  instructorAttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref instructorInternetGateway
+      VpcId: !Ref instructorVPC
+
+  instructorRouteTableForPublicSubnet:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref instructorVPC
+      Tags:
+        - Key: Name
+          Value: instructorRouteTableForPublicSubnet
+  
+  instructorRouteForPublicSubnet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref instructorRouteTableForPublicSubnet
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref instructorInternetGateway
+
+  instructorAssociateRouteTableForPublicSubnet:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref instructorRouteTableForPublicSubnet
+      SubnetId: !Ref instructorPublicSubnet
+  
+  instructorSecurityGroupForPublicServer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: instructorSecurityGroupForPublicServer
+      GroupDescription: instructorSecurityGroupForPublicServer
+      VpcId: !Ref instructorVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: instructorSecurityGroupForPublicServer
+
+  instructorNodeInstanceNo1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03ec1be199e2100ec
+      InstanceType: t2.micro
+      KeyName: instructor-node
+      NetworkInterfaces:
+      - SubnetId: !Ref instructorPublicSubnet
+        GroupSet:
+          - !Ref instructorSecurityGroupForPublicServer
+        AssociatePublicIpAddress: true
+        DeviceIndex : 0
+      Tags:
+        - Key: Name
+          Value: instructor-node-No1
+
+  ElasticIPNo1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: instructor-node-No1
+    
+  ElasticIPAssociateNo1:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      AllocationId: !GetAtt ElasticIPNo1.AllocationId
+      InstanceId: !Ref instructorNodeInstanceNo1

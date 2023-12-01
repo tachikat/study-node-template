@@ -1,0 +1,242 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  studyVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      Tags:
+      - Key: Name
+        Value: study-vpc
+
+  studyPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.5.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref studyVPC
+      AvailabilityZone: us-east-1a
+      Tags:
+        - Key: Name
+          Value: studyPublicSubnet
+  
+  studyPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.10.0/24
+      MapPublicIpOnLaunch: false
+      VpcId: !Ref studyVPC
+      AvailabilityZone: us-east-1a
+      Tags:
+        - Key: Name
+          Value: studyPrivateSubnet
+  
+  studyInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: studyInternetGateway
+  
+  studyAttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref studyInternetGateway
+      VpcId: !Ref studyVPC
+
+  studyRouteTableForPublicSubnet:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref studyVPC
+      Tags:
+        - Key: Name
+          Value: studyRouteTableForPublicSubnet
+  
+  studyRouteForPublicSubnet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref studyRouteTableForPublicSubnet
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref studyInternetGateway
+
+  studyAssociateRouteTableForPublicSubnet:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref studyRouteTableForPublicSubnet
+      SubnetId: !Ref studyPublicSubnet
+  
+  studySecurityGroupForPublicServer:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: studySecurityGroupForPublicServer
+      GroupDescription: studySecurityGroupForPublicServer
+      VpcId: !Ref studyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: studySecurityGroupForPublicServer
+
+  StudyNodeInstanceNo1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03ec1be199e2100ec
+      InstanceType: t2.micro
+      KeyName: study-node
+      NetworkInterfaces:
+      - SubnetId: !Ref studyPublicSubnet
+        GroupSet:
+          - !Ref studySecurityGroupForPublicServer
+        AssociatePublicIpAddress: true
+        DeviceIndex : 0
+      Tags:
+        - Key: Name
+          Value: study-node-No1
+
+  ElasticIPNo1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: study-node-No1
+    
+  ElasticIPAssociateNo1:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      AllocationId: !GetAtt ElasticIPNo1.AllocationId
+      InstanceId: !Ref StudyNodeInstanceNo1
+
+  StudyNodeInstanceNo2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03ec1be199e2100ec
+      InstanceType: t2.micro
+      KeyName: study-node
+      NetworkInterfaces:
+      - SubnetId: !Ref studyPublicSubnet
+        GroupSet:
+          - !Ref studySecurityGroupForPublicServer
+        AssociatePublicIpAddress: true
+        DeviceIndex : 0
+      Tags:
+        - Key: Name
+          Value: study-node-No2
+
+  ElasticIPNo2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: study-node-No2
+    
+  ElasticIPAssociateNo2:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      AllocationId: !GetAtt ElasticIPNo2.AllocationId
+      InstanceId: !Ref StudyNodeInstanceNo2
+
+  StudyNodeInstanceNo3:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03ec1be199e2100ec
+      InstanceType: t2.micro
+      KeyName: study-node
+      NetworkInterfaces:
+      - SubnetId: !Ref studyPublicSubnet
+        GroupSet:
+          - !Ref studySecurityGroupForPublicServer
+        AssociatePublicIpAddress: true
+        DeviceIndex : 0
+      Tags:
+        - Key: Name
+          Value: study-node-No3
+
+  ElasticIPNo3:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: study-node-No3
+    
+  ElasticIPAssociateNo3:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      AllocationId: !GetAtt ElasticIPNo3.AllocationId
+      InstanceId: !Ref StudyNodeInstanceNo3
+
+  StudyNodeInstanceNo4:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03ec1be199e2100ec
+      InstanceType: t2.micro
+      KeyName: study-node
+      NetworkInterfaces:
+      - SubnetId: !Ref studyPublicSubnet
+        GroupSet:
+          - !Ref studySecurityGroupForPublicServer
+        AssociatePublicIpAddress: true
+        DeviceIndex : 0
+      Tags:
+        - Key: Name
+          Value: study-node-No4
+
+  ElasticIPNo4:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: study-node-No4
+    
+  ElasticIPAssociateNo4:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      AllocationId: !GetAtt ElasticIPNo4.AllocationId
+      InstanceId: !Ref StudyNodeInstanceNo4
+
+  StudyNodeInstanceNo5:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-03ec1be199e2100ec
+      InstanceType: t2.micro
+      KeyName: study-node
+      NetworkInterfaces:
+      - SubnetId: !Ref studyPublicSubnet
+        GroupSet:
+          - !Ref studySecurityGroupForPublicServer
+        AssociatePublicIpAddress: true
+        DeviceIndex : 0
+      Tags:
+        - Key: Name
+          Value: study-node-No5
+
+  ElasticIPNo5:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: study-node-No5
+    
+  ElasticIPAssociateNo5:
+    Type: AWS::EC2::EIPAssociation
+    Properties: 
+      AllocationId: !GetAtt ElasticIPNo5.AllocationId
+      InstanceId: !Ref StudyNodeInstanceNo5
